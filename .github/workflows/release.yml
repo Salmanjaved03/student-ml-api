@@ -8,7 +8,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/student-ml-api
 
 jobs:
   release:
@@ -37,15 +36,18 @@ jobs:
       - name: Run tests
         run: pytest tests/ -v
 
-      # 3. Extract version from tag automatically (Part 15 constraint)
+      # 3. Extract version from tag and build lowercase image name
       - name: Extract version from tag
         id: version
         run: |
           TAG="${GITHUB_REF_NAME}"
           VERSION="${TAG#v}"
+          IMAGE_NAME=$(echo "${{ github.repository_owner }}/student-ml-api" | tr '[:upper:]' '[:lower:]')
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "image_name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
           echo "Extracted version: ${VERSION} from tag: ${TAG}"
+          echo "Image name: ${IMAGE_NAME}"
 
       # 4. Authenticate to GHCR
       - name: Log in to GitHub Container Registry
@@ -63,17 +65,17 @@ jobs:
             --build-arg GIT_COMMIT=${{ github.sha }} \
             --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
             --build-arg REPO_URL=${{ github.server_url }}/${{ github.repository }} \
-            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} \
-            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -t ${{ env.REGISTRY }}/${{ steps.version.outputs.image_name }}:${{ steps.version.outputs.version }} \
+            -t ${{ env.REGISTRY }}/${{ steps.version.outputs.image_name }}:latest \
+            -t ${{ env.REGISTRY }}/${{ steps.version.outputs.image_name }}:${{ github.sha }} \
             .
 
       # 6. Push all tags to GHCR (version + latest + commit SHA — Part 24)
       - name: Push Docker images
         run: |
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ steps.version.outputs.image_name }}:${{ steps.version.outputs.version }}
+          docker push ${{ env.REGISTRY }}/${{ steps.version.outputs.image_name }}:latest
+          docker push ${{ env.REGISTRY }}/${{ steps.version.outputs.image_name }}:${{ github.sha }}
 
       # 7. Output summary
       - name: Release summary
@@ -83,6 +85,6 @@ jobs:
           echo "- **Tag**: ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Images pushed**:" >> $GITHUB_STEP_SUMMARY
-          echo "  - \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "  - \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
-          echo "  - \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "  - \`${{ env.REGISTRY }}/${{ steps.version.outputs.image_name }}:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "  - \`${{ env.REGISTRY }}/${{ steps.version.outputs.image_name }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "  - \`${{ env.REGISTRY }}/${{ steps.version.outputs.image_name }}:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY

@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 # Read version from VERSION file
 VERSION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION")
 try:
-    with open(VERSION_FILE, "r") as f:
+    with open(VERSION_FILE, "r", encoding="utf-8") as f:
         APP_VERSION = f.read().strip()
 except FileNotFoundError:
     APP_VERSION = "unknown"
@@ -34,9 +34,12 @@ class PredictResponse(BaseModel):
 class HealthResponse(BaseModel):
     """Response model for the health endpoint."""
 
+    model_config = {"protected_namespaces": ()}
+
     status: str
     application: str
-    version: str
+    application_version: str
+    model_version: str
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -45,7 +48,7 @@ def health():
     return HealthResponse(
         status="healthy",
         application="student-ml-api",
-        application_version="1.1.0",
+        application_version=APP_VERSION,
         model_version="model-1",
     )
 

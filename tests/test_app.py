@@ -22,13 +22,14 @@ client = TestClient(app)
 
 # ---------- Test 1: Health endpoint ----------
 def test_health_endpoint():
-    """Verify /health returns 200 with correct payload."""
+    """Verify /health returns 200 with correct payload for v1.1.0."""
     response = client.get("/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
     assert data["application"] == "student-ml-api"
-    assert "version" in data
+    assert data["application_version"] == "1.1.0"
+    assert data["model_version"] == "model-1"
 
 
 # ---------- Test 2: Successful prediction ----------

@@ -20,17 +20,20 @@ app = FastAPI(title="student-ml-api", version=APP_VERSION)
 
 class PredictRequest(BaseModel):
     """Request model for the prediction endpoint."""
+
     value: float = Field(..., description="Numeric input value for prediction")
 
 
 class PredictResponse(BaseModel):
     """Response model for the prediction endpoint."""
+
     input: float
     prediction: float
 
 
 class HealthResponse(BaseModel):
     """Response model for the health endpoint."""
+
     status: str
     application: str
     version: str
@@ -42,7 +45,8 @@ def health():
     return HealthResponse(
         status="healthy",
         application="student-ml-api",
-        version=APP_VERSION,
+        application_version="1.1.0",
+        model_version="model-1",
     )
 
 
